@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox
+import os
+from collections import defaultdict
 from preprocessingAlgorithm.tokenizeAlgorithm import tokenization
 from preprocessingAlgorithm.loweercaseAlgorithm import lowercase
 from preprocessingAlgorithm.frequencyCounterAlgorithm import frequencyCounter
 from preprocessingAlgorithm.porterStemmerAlgorithm import to_stem
+from classificationAlgorithm.buildDictionaryAlgorithm import build_dictionary , calculate_class_probabilities , calculate_conditional_probabilities , classify_test_document
 
 
 
@@ -64,6 +67,76 @@ def create_button(main_frame, label, command):
     )
     return button
 
+def create_classification_frame(mina_frame) :
+
+    classification_frame = tk.Frame(main_frame, bg=color1, pady=40)
+    classification_frame.grid(row=0, column=1, rowspan=5, sticky='NSEW', padx=20, pady=10)
+
+    scrollbar = tk.Scrollbar(classification_frame)
+    scrollbar.grid(row=3, column=1, rowspan=2, sticky='NS', padx=(0, 20), pady=10) 
+
+
+    text_field = tk.Text(
+    classification_frame,
+    width=50,
+    height=50,
+    background='WHITE',
+    highlightbackground=color2,
+    highlightcolor=color2,
+    bd=3,
+    highlightthickness=2,
+    relief=tk.SOLID,
+    yscrollcommand=scrollbar.set,
+)
+    
+
+
+    current_dir = os.path.dirname(os.path.abspath(__file__)) 
+
+    train_folder_path = os.path.join(current_dir, 'Classification-data' )
+    test_folder_path = os.path.join(current_dir, 'test')
+
+    dictionary = build_dictionary(train_folder_path)
+    class_probabilities = calculate_class_probabilities(test_folder_path)
+    conditional_probabilities = calculate_conditional_probabilities(train_folder_path , dictionary)
+    
+    predicted_documents = defaultdict(int)
+
+    for filename in os.listdir(test_folder_path) :
+        file_path = os.path.join(test_folder_path , filename)
+        with open(file_path , 'r' , encoding='utf-8' ,) as file :
+            test_document = file.read()
+            predicted_class = classify_test_document(test_document,class_probabilities , conditional_probabilities , dictionary)
+            predicted_documents[filename] = predicted_class
+
+    text = predicted_documents 
+    
+    
+    
+    text_field.grid(column=0, row=4, rowspan=2, sticky='W', padx=20, pady=10)
+    text_field.insert(tk.END, text)
+
+    scrollbar.config(command=text_field.yview)
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -71,8 +144,6 @@ def create_preprocessing_frame(main_frame):
     preprocessing_frame = tk.Frame(main_frame, bg=color1, pady=40)
     preprocessing_frame.grid(row=0, column=1, rowspan=5, sticky='NSEW', padx=20, pady=10)
 
-
-    
 
     
     def read_text_file(file_path):
@@ -157,7 +228,7 @@ def preprocessing_btn_click():
 
 
 def classification_btn_click():
-    messagebox.showinfo("Button Clicked", "Classification button clicked!")
+    create_classification_frame(main_frame)
 
 
 def information_retrieval_btn_click():
